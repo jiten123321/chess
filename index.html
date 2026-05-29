@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Little Question for You ♟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#f6efe2;
+    --paper:#fbf7ee;
+    --ink:#3a2e2a;
+    --soft-ink:#6b5b52;
+    --board-dark:#7c5a48;
+    --board-light:#e8d8c3;
+    --accent:#9c5c4e;        /* dusty terracotta */
+    --accent-deep:#6e3d33;
+    --gold:#c8a25a;
+    --shadow:rgba(58,46,42,.25);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  html,body{height:100%}
+  body{
+    font-family:'Cormorant Garamond', serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 20% 15%, #fff5e6 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #f1e3cd 0%, transparent 50%),
+      var(--cream);
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* faint chessboard texture in the corners */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      linear-gradient(45deg, rgba(124,90,72,.04) 25%, transparent 25%, transparent 75%, rgba(124,90,72,.04) 75%),
+      linear-gradient(45deg, rgba(124,90,72,.04) 25%, transparent 25%, transparent 75%, rgba(124,90,72,.04) 75%);
+    background-size:80px 80px;
+    background-position:0 0, 40px 40px;
+    pointer-events:none;
+    z-index:0;
+    opacity:.6;
+  }
+
+  .stage{position:relative;z-index:2;width:100%;max-width:560px}
+
+  /* ---------- shared card ---------- */
+  .card{
+    background:var(--paper);
+    border-radius:18px;
+    padding:48px 40px 44px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.8) inset,
+      0 30px 60px -20px var(--shadow),
+      0 6px 18px -8px var(--shadow);
+    border:1px solid rgba(124,90,72,.18);
+    position:relative;
+    text-align:center;
+  }
+  .card::after{ /* deckle/inner frame */
+    content:"";
+    position:absolute;inset:14px;
+    border:1px dashed rgba(124,90,72,.35);
+    border-radius:10px;
+    pointer-events:none;
+  }
+
+  /* ---------- ASK SCREEN ---------- */
+  .knight{
+    font-size:74px;line-height:1;
+    display:inline-block;
+    filter:drop-shadow(0 8px 10px var(--shadow));
+    animation:bob 3.2s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}
+
+  .eyebrow{
+    font-family:'Marcellus', serif;
+    letter-spacing:.32em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--accent);
+    margin:18px 0 6px;
+  }
+
+  .ask-title{
+    font-family:'Caveat', cursive;
+    font-size:clamp(34px,7vw,46px);
+    line-height:1.15;
+    color:var(--accent-deep);
+    margin-bottom:6px;
+    font-weight:700;
+  }
+  .ask-sub{
+    font-size:20px;
+    font-style:italic;
+    color:var(--soft-ink);
+    margin-bottom:30px;
+  }
+
+  .btns{display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:58px}
+
+  .btn{
+    font-family:'Marcellus', serif;
+    font-size:16px;
+    letter-spacing:.05em;
+    padding:14px 30px;
+    border-radius:40px;
+    border:none;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .btn-yes{
+    background:linear-gradient(135deg,var(--accent),var(--accent-deep));
+    color:#fff7ec;
+    box-shadow:0 10px 20px -8px var(--accent-deep);
+  }
+  .btn-yes:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 16px 26px -10px var(--accent-deep)}
+  .btn-yes:active{transform:translateY(0) scale(.98)}
+
+  .btn-no{
+    background:transparent;
+    color:var(--soft-ink);
+    border:1px solid rgba(124,90,72,.4);
+    position:relative;
+  }
+  .btn-no.flee{position:fixed;z-index:30}
+
+  /* ---------- REVEAL / LETTER ---------- */
+  #letterScreen{display:none}
+  .letter-mark{
+    font-size:30px;
+    letter-spacing:8px;
+    color:var(--gold);
+    margin-bottom:10px;
+  }
+  .letter-title{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    font-size:clamp(30px,6.5vw,42px);
+    color:var(--accent-deep);
+    margin-bottom:18px;
+  }
+  .letter-body{
+    text-align:left;
+    font-size:20px;
+    line-height:1.7;
+    color:var(--ink);
+  }
+  .letter-body p{margin-bottom:14px}
+  .hand{font-family:'Caveat', cursive;font-size:24px;color:var(--accent-deep)}
+
+  .details{
+    margin:24px auto 8px;
+    text-align:left;
+    border-top:1px dashed rgba(124,90,72,.35);
+    border-bottom:1px dashed rgba(124,90,72,.35);
+    padding:16px 4px;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:8px 14px;
+    font-size:18px;
+  }
+  .details .ic{font-size:20px}
+  .details .lbl{color:var(--soft-ink);font-style:italic}
+
+  .signoff{
+    text-align:right;
+    margin-top:18px;
+    font-family:'Caveat', cursive;
+    font-size:26px;
+    color:var(--accent-deep);
+  }
+
+  .replay{
+    margin-top:26px;
+    font-family:'Marcellus', serif;
+    font-size:13px;
+    letter-spacing:.08em;
+    color:var(--soft-ink);
+    background:none;border:none;cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:4px;
+    opacity:.8;
+  }
+  .replay:hover{opacity:1;color:var(--accent)}
+
+  /* entrance animation */
+  .reveal-in{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+  .d1{animation-delay:.05s}.d2{animation-delay:.18s}.d3{animation-delay:.32s}.d4{animation-delay:.46s}.d5{animation-delay:.6s}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+  /* falling pieces */
+  .piece{position:fixed;top:-40px;font-size:26px;z-index:5;pointer-events:none;will-change:transform;animation:fall linear forwards}
+  @keyframes fall{
+    to{transform:translateY(110vh) rotate(540deg);opacity:.9}
+  }
+
+  /* ---------- MOBILE ---------- */
+  @media (max-width:480px){
+    body{padding:14px}
+    .card{padding:34px 22px 32px;border-radius:14px}
+    .card::after{inset:10px}
+    .knight{font-size:58px}
+    .eyebrow{font-size:11px;letter-spacing:.26em}
+    .ask-sub{font-size:18px;margin-bottom:26px}
+    .btns{gap:12px;min-height:52px}
+    .btn{padding:13px 24px;font-size:15px}
+    .letter-mark{font-size:23px;letter-spacing:5px}
+    .letter-body{font-size:18px;line-height:1.65}
+    .letter-body p{margin-bottom:12px}
+    .hand{font-size:21px}
+    .details{font-size:16px;gap:8px 10px;padding:14px 2px}
+    .details .ic{font-size:18px}
+    .signoff{font-size:23px}
+  }
+  @media (max-width:360px){
+    .card{padding:30px 18px 28px}
+    .knight{font-size:50px}
+    .letter-body, .details{font-size:16px}
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <!-- ASK -->
+    <div class="card" id="askScreen">
+      <div class="knight">♞</div>
+      <div class="eyebrow">A tiny question</div>
+      <h1 class="ask-title">Will you play a game<br>of chess with me?</h1>
+      <p class="ask-sub">just us, the board, and a little bit of time ♟</p>
+      <div class="btns">
+        <button class="btn btn-yes" id="yesBtn">Yes, I'd love to</button>
+        <button class="btn btn-no" id="noBtn">hmm, no</button>
+      </div>
+    </div>
+
+    <!-- LETTER -->
+    <div class="card" id="letterScreen">
+      <div class="letter-mark reveal-in d1">♔ ♕ ♖ ♗ ♘ ♙</div>
+      <h2 class="letter-title reveal-in d1">Yay — it's a date on the board!</h2>
+      <div class="letter-body">
+        <p class="reveal-in d2">Dear you,</p>
+        <p class="reveal-in d2">I've been thinking it would be lovely to steal a quiet little while with you — no rush, no pressure, just a checkered board between us and some easy conversation.</p>
+        <p class="reveal-in d3">I'll bring the chess set (and probably lose with great enthusiasm). You bring yourself — that's honestly the whole point. <span class="hand">winner gets bragging rights, loser owes a smile.</span></p>
+        <div class="details reveal-in d4">
+          <span class="ic">📅</span><span><span class="lbl">When:</span> whenever suits you — you pick the day</span>
+          <span class="ic">📍</span><span><span class="lbl">Where:</span> somewhere cozy, your call</span>
+          <span class="ic">♟️</span><span><span class="lbl">Dress code:</span> comfy. it's chess, not a tournament</span>
+          <span class="ic">☕</span><span><span class="lbl">Bonus:</span> snacks &amp; chai included</span>
+        </div>
+        <p class="reveal-in d5">No grand plans, no expectations — just a good game and good company. If you'd rather I make the moves on timing too, say the word and I'll sort it all out.</p>
+        <p class="signoff reveal-in d5">Your move, always —<br>me 🤍</p>
+      </div>
+      <button class="replay" id="replayBtn">↺ start over</button>
+    </div>
+  </div>
+
+<script>
+  const askScreen  = document.getElementById('askScreen');
+  const letterScreen = document.getElementById('letterScreen');
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn  = document.getElementById('noBtn');
+  const replayBtn = document.getElementById('replayBtn');
+
+  // playful runaway "No"
+  let dodges = 0;
+  const noLines = ['hmm, no','are you sure?','reaally?','catch me!','last chance 😏','just say yes 🤍'];
+  function flee(e){
+    if(e) e.preventDefault();
+    dodges++;
+    noBtn.classList.add('flee');
+    const pad = 12;
+    const w = noBtn.offsetWidth, h = noBtn.offsetHeight;
+    const maxX = Math.max(pad, window.innerWidth  - w - pad);
+    const maxY = Math.max(pad, window.innerHeight - h - pad);
+    const x = pad + Math.random() * Math.max(0, maxX - pad);
+    const y = pad + Math.random() * Math.max(0, maxY - pad);
+    noBtn.style.left = x + 'px';
+    noBtn.style.top  = y + 'px';
+    noBtn.textContent = noLines[Math.min(dodges, noLines.length-1)];
+    if(dodges >= 4){ // grow the yes button as encouragement (capped)
+      yesBtn.style.transform = `scale(${Math.min(1 + dodges*0.06, 1.3)})`;
+    }
+  }
+  noBtn.addEventListener('mouseenter', flee);
+  noBtn.addEventListener('touchstart', flee, {passive:false});
+  noBtn.addEventListener('click', flee);
+
+  // falling chess pieces
+  function rain(){
+    const glyphs = ['♟','♞','♝','♜','♛','♚','♙','♘'];
+    for(let i=0;i<26;i++){
+      const s = document.createElement('div');
+      s.className = 'piece';
+      s.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+      s.style.left = Math.random()*100 + 'vw';
+      s.style.fontSize = (18 + Math.random()*22) + 'px';
+      s.style.animationDuration = (2.4 + Math.random()*2.6) + 's';
+      s.style.animationDelay = (Math.random()*0.8) + 's';
+      s.style.color = Math.random()>.5 ? '#9c5c4e' : '#c8a25a';
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(), 5800);
+    }
+  }
+
+  function sayYes(){
+    rain();
+    askScreen.style.display = 'none';
+    letterScreen.style.display = 'block';
+    letterScreen.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  yesBtn.addEventListener('click', sayYes);
+
+  replayBtn.addEventListener('click', ()=>{
+    letterScreen.style.display='none';
+    askScreen.style.display='block';
+    noBtn.classList.remove('flee');
+    noBtn.style.left=noBtn.style.top='';
+    noBtn.textContent='hmm, no';
+    yesBtn.style.transform='';
+    dodges=0;
+  });
+</script>
+</body>
+</html>
